@@ -5,6 +5,7 @@ import {
   BookOpen,
   Calendar,
   Download,
+  ExternalLink,
   Eye,
   FileText,
   GraduationCap,
@@ -121,19 +122,50 @@ export function NoteCard({
 
           <div className="flex items-center gap-1.5">
             {note.file && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const url = note.file?.getDirectURL();
-                  if (url) window.open(url, "_blank");
-                }}
-                title="Download"
-              >
-                <Download className="w-3.5 h-3.5" />
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const url = note.file?.getDirectURL();
+                    if (url) window.open(url, "_blank");
+                  }}
+                  title="Open in browser"
+                  data-ocid={`notes.item.${index + 1}.open_button`}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const url = note.file?.getDirectURL();
+                    if (!url) return;
+                    try {
+                      const response = await fetch(url);
+                      const blob = await response.blob();
+                      const blobUrl = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = blobUrl;
+                      a.download = note.title || "file";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                    } catch {
+                      window.open(url, "_blank");
+                    }
+                  }}
+                  title="Download"
+                  data-ocid={`notes.item.${index + 1}.download_button`}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </Button>
+              </>
             )}
             {isOwner && (
               <>

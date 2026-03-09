@@ -11,14 +11,22 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpenCheck, Filter, Search, X } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { Note } from "../backend.d";
+import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { NoteCard } from "../components/NoteCard";
 import { useDebounce } from "../hooks/useDebounce";
-import { useGetAllNotes, useSearchNotes } from "../hooks/useQueries";
+import {
+  useDeleteNote,
+  useGetAllNotes,
+  useSearchNotes,
+} from "../hooks/useQueries";
 
 const CLASS_LEVELS = [
   "All",
-  ...Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`),
+  "Class 11",
+  "Class 12",
   ...Array.from({ length: 10 }, (_, i) => `Sem ${i + 1}`),
 ];
 
@@ -26,6 +34,20 @@ export function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("");
   const [classLevelFilter, setClassLevelFilter] = useState("All");
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+
+  const deleteNote = useDeleteNote();
+
+  const handleDeleteConfirm = async () => {
+    if (!noteToDelete) return;
+    try {
+      await deleteNote.mutateAsync(noteToDelete.id);
+      toast.success("Note deleted successfully");
+      setNoteToDelete(null);
+    } catch {
+      toast.error("Failed to delete note");
+    }
+  };
 
   const debouncedSearch = useDebounce(searchQuery, 400);
 
@@ -262,10 +284,25 @@ export function BrowsePage() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         >
           {displayedNotes.map((note, index) => (
-            <NoteCard key={note.id} note={note} index={index} isOwner={false} />
+            <NoteCard
+              key={note.id}
+              note={note}
+              index={index}
+              isOwner={true}
+              onDelete={(n) => setNoteToDelete(n)}
+            />
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={noteToDelete !== null}
+        onClose={() => setNoteToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title={noteToDelete?.title}
+        isPending={deleteNote.isPending}
+      />
     </main>
   );
 }

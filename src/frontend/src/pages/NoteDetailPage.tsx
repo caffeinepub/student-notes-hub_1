@@ -7,6 +7,7 @@ import {
   BookOpen,
   Calendar,
   Download,
+  ExternalLink,
   FileText,
   GraduationCap,
   Pencil,
@@ -42,7 +43,7 @@ export function NoteDetailPage() {
   const { data: note, isLoading, error } = useGetNote(id);
   const deleteNote = useDeleteNote();
 
-  const isOwner = false;
+  const isOwner = true;
 
   const handleDelete = async () => {
     if (!note) return;
@@ -203,17 +204,45 @@ export function NoteDetailPage() {
                   </p>
                 </div>
               </div>
-              <Button
-                onClick={() => {
-                  const url = note.file?.getDirectURL();
-                  if (url) window.open(url, "_blank");
-                }}
-                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
-                data-ocid="note_detail.download_button"
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  onClick={() => {
+                    const url = note.file?.getDirectURL();
+                    if (url) window.open(url, "_blank");
+                  }}
+                  variant="outline"
+                  className="gap-2"
+                  data-ocid="note_detail.open_button"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const url = note.file?.getDirectURL();
+                    if (!url) return;
+                    try {
+                      const response = await fetch(url);
+                      const blob = await response.blob();
+                      const blobUrl = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = blobUrl;
+                      a.download = note.title || "file";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                    } catch {
+                      window.open(url, "_blank");
+                    }
+                  }}
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                  data-ocid="note_detail.download_button"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </Button>
+              </div>
             </div>
           )}
 

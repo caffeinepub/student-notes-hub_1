@@ -26,7 +26,8 @@ import { useCreateNote, useUpdateNote } from "../hooks/useQueries";
 
 const CLASS_LEVELS = [
   "All",
-  ...Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`),
+  "Class 11",
+  "Class 12",
   ...Array.from({ length: 10 }, (_, i) => `Sem ${i + 1}`),
 ];
 
@@ -127,8 +128,31 @@ export function NoteFormModal({ open, onClose, editNote }: NoteFormModalProps) {
       }
       resetForm();
       onClose();
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      console.error("Upload error:", err);
+      if (
+        message.toLowerCase().includes("not authenticated") ||
+        message.toLowerCase().includes("actor")
+      ) {
+        toast.error("Session expired. Please refresh the page and try again.");
+      } else if (
+        message.toLowerCase().includes("too large") ||
+        message.toLowerCase().includes("size")
+      ) {
+        toast.error("File is too large. Maximum allowed size is 100MB.");
+      } else if (
+        message.toLowerCase().includes("network") ||
+        message.toLowerCase().includes("fetch") ||
+        message.toLowerCase().includes("connection")
+      ) {
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+      } else {
+        toast.error("Upload failed. Please try again.");
+      }
     }
   };
 

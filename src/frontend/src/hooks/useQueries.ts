@@ -84,10 +84,13 @@ export function useCreateNote() {
       if (!actor) throw new Error("Not authenticated");
       let blob: ExternalBlob | null = null;
       if (file) {
+        if (onProgress) onProgress(5);
         const bytes = new Uint8Array(await file.arrayBuffer());
         blob = ExternalBlob.fromBytes(bytes);
         if (onProgress) {
-          blob = blob.withUploadProgress(onProgress);
+          blob = blob.withUploadProgress((pct) =>
+            onProgress(5 + Math.round(pct * 0.9)),
+          );
         }
       }
       return actor.createNote(title, subject, classLevel, description, blob);
@@ -130,10 +133,13 @@ export function useUpdateNote() {
 
       let blob: ExternalBlob | null = null;
       if (file) {
+        if (onProgress) onProgress(5);
         const bytes = new Uint8Array(await file.arrayBuffer());
         blob = ExternalBlob.fromBytes(bytes);
         if (onProgress) {
-          blob = blob.withUploadProgress(onProgress);
+          blob = blob.withUploadProgress((pct) =>
+            onProgress(5 + Math.round(pct * 0.9)),
+          );
         }
       } else if (keepExistingFile && existingBlob) {
         blob = existingBlob;
